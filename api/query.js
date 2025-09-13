@@ -46,9 +46,8 @@ export default async function handler(req, res) {
         }
 
         console.log(`Processing query: ${question}`);
-        console.log(`API Key ends with: ${OPENAI_API_KEY?.slice(-4) || 'undefined'}`);
 
-        // TEMPORARY: Skip OpenAI for now - return basic response
+        // TEMPORARY: No OpenAI integration - return basic response
         const answer = `Ciao! Sono UrbanAI. Al momento sto elaborando la tua richiesta: "${question}". 
         
 Il sistema di AI è temporaneamente in manutenzione, ma le funzioni di scraping e gestione documenti sono operative.
