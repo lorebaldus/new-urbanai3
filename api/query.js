@@ -10,7 +10,10 @@ const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'urban-ai';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey: OPENAI_API_KEY,
+  organization: process.env.OPENAI_ORG_ID
+});
 const pinecone = new Pinecone({ apiKey: PINECONE_API_KEY });
 
 export default async function handler(req, res) {
