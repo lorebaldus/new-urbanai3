@@ -218,8 +218,9 @@
         }
 
         getApiBase() {
-          // PRIORITY 1: Force urbanator.it to use Vercel API
+          // PRIORITY 1: Force urbanator.it to use Vercel API (v2)
           if (location.hostname === 'urbanator.it' || location.hostname === 'www.urbanator.it') {
+            console.log('Urbanator.it detected - using Vercel API');
             return 'https://new-urbanai3.vercel.app';
           }
           
