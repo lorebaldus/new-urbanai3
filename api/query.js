@@ -7,7 +7,7 @@ import pdf from 'pdf-parse';
 
 const PINECONE_API_KEY = process.env.PINECONE_API_KEY;
 const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'urban-ai';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const openai = new OpenAI({ 
@@ -57,6 +57,7 @@ export default async function handler(req, res) {
         }
 
         console.log(`Processing query: ${question}`);
+        console.log(`API Key ends with: ${OPENAI_API_KEY?.slice(-4) || 'undefined'}`);
 
         // TEMPORARY: Skip OpenAI for now - return basic response
         const answer = `Ciao! Sono UrbanAI. Al momento sto elaborando la tua richiesta: "${question}". 
