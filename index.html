@@ -218,14 +218,14 @@
         }
 
         getApiBase() {
-          const meta = document.querySelector('meta[name="urbanai-api"]');
-          if (meta && meta.content) return meta.content.replace(/\/+$/, '');
-          if (location.protocol === 'file:') return 'http://localhost:3000';
-          
-          // For urbanator.it, use the Vercel API endpoints
+          // PRIORITY 1: Force urbanator.it to use Vercel API
           if (location.hostname === 'urbanator.it' || location.hostname === 'www.urbanator.it') {
             return 'https://new-urbanai3.vercel.app';
           }
+          
+          const meta = document.querySelector('meta[name="urbanai-api"]');
+          if (meta && meta.content) return meta.content.replace(/\/+$/, '');
+          if (location.protocol === 'file:') return 'http://localhost:3000';
           
           return '';
         }
