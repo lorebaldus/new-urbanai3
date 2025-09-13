@@ -218,10 +218,10 @@
         }
 
         getApiBase() {
-          // PRIORITY 1: Force urbanator.it to use Vercel API (v2)
+          // PRIORITY 1: Force urbanator.it to use Vercel API (v3 - fresh deployment)
           if (location.hostname === 'urbanator.it' || location.hostname === 'www.urbanator.it') {
-            console.log('Urbanator.it detected - using Vercel API');
-            return 'https://new-urbanai3.vercel.app';
+            console.log('Urbanator.it detected - using FRESH Vercel API');
+            return 'https://IL_NUOVO_URL_QUI.vercel.app';
           }
           
           const meta = document.querySelector('meta[name="urbanai-api"]');
@@ -346,7 +346,9 @@
         }
 
         async queryAPI(question) {
-          const resp = await fetch(this.apiUrl('/api/query'), {
+          const url = this.apiUrl('/api/query');
+          console.log('🚀 CALLING API URL:', url);
+          const resp = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question })
