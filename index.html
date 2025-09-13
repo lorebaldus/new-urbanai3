@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="urbanai-api" content="https://new-urbanai3.vercel.app">
+    <title>UrbanAI - Assistente Urbanistico Intelligente</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo { display: flex; align-items: center; gap: 12px; }
+      .logo h1 { color: #2d3748; font-size: 1.8rem; font-weight: 700; }
+
+      .status { display: flex; align-items: center; gap: 8px; color: #4a5568; }
+      .status-dot {
+        width: 8px; height: 8px; background: #48bb78; border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      .status-dot.degraded { background: #ed8936; }
+      .status-dot.offline { background: #e53e3e; }
+
+      @keyframes pulse { 0%{opacity:1;} 50%{opacity:.5;} 100%{opacity:1;} }
+
+      .main-container {
+        flex: 1; display: flex; flex-direction: column;
+        max-width: 1200px; margin: 0 auto; width: 100%; padding: 2rem; gap: 2rem;
+      }
+
+      .chat-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+        display: flex; flex-direction: column; height: 600px; overflow: hidden;
+      }
+
+      .chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 12px;
+      }
+      .chat-header i { font-size: 1.5rem; }
+      .chat-header h2 { font-size: 1.3rem; font-weight: 600; }
+
+      .messages { flex: 1; padding: 2rem; overflow-y: auto; background: #f8fafc; }
+      .message { margin-bottom: 1.5rem; display: flex; gap: 12px; }
+      .message.user { flex-direction: row-reverse; }
+
+      .message-avatar {
+        width: 40px; height: 40px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; color: white; flex-shrink: 0;
+      }
+      .message.user .message-avatar { background: #667eea; }
+      .message.assistant .message-avatar { background: #764ba2; }
+
+      .message-content {
+        background: white; padding: 1rem 1.5rem; border-radius: 18px;
+        max-width: 70%; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        line-height: 1.5; color: #2d3748; word-break: break-word;
+      }
+      .message.user .message-content { background: #667eea; color: white; }
+
+      .welcome-message {
+        text-align: center; color: #718096; padding: 2rem;
+        font-size: 1.1rem; line-height: 1.6;
+      }
+
+      .input-container {
+        padding: 2rem; background: white; border-top: 1px solid #e2e8f0;
+      }
+      .input-group { display: flex; gap: 12px; align-items: flex-end; }
+      .input-wrapper { flex: 1; position: relative; }
+
+      #questionInput {
+        width: 100%; padding: 1rem 1.5rem; border: 2px solid #e2e8f0; border-radius: 25px;
+        font-size: 1rem; outline: none; transition: all 0.3s ease;
+        resize: none; min-height: 50px; max-height: 120px; font-family: inherit;
+      }
+      #questionInput:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.1); }
+
+      #sendBtn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; border: none; width: 50px; height: 50px; border-radius: 50%;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102,126,234,.3);
+      }
+      #sendBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,.4); }
+      #sendBtn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+      .typing-indicator { display: none; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+      .typing-dots { display: flex; gap: 4px; }
+      .typing-dot { width: 8px; height: 8px; background: #cbd5e0; border-radius: 50%;
+        animation: typing 1.5s infinite ease-in-out; }
+      .typing-dot:nth-child(2){ animation-delay: .2s; } .typing-dot:nth-child(3){
+        animation-delay: .4s; }
+      @keyframes typing { 0%,60%,100%{ transform: translateY(0); opacity: .4;} 30%{
+        transform: translateY(-10px); opacity: 1;} }
+
+      .error-message {
+        background: #fed7d7; color: #c53030; padding: 1rem; border-radius: 8px;
+        margin-top: 1rem; display: none;
+      }
+
+      .info-badge {
+        background: rgba(102,126,234,.1); color: #667eea; padding: .5rem 1rem;
+        border-radius: 20px;
+        font-size: .9rem; display: inline-flex; align-items: center; gap: 6px;
+        margin-top: .5rem;
+      }
+
+      @media (max-width: 768px) {
+        .main-container { padding: 1rem; gap: 1rem; }
+        .header { padding: 1rem; }
+        .logo h1 { font-size: 1.5rem; }
+        .chat-container { height: 500px; }
+        .message-content { max-width: 85%; }
+        .input-container { padding: 1rem; }
+      }
+
+      .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+    <header class="header">
+      <div class="logo">
+        <h1>UrbanAI</h1>
+      </div>
+      <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Sistema Attivo</span>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="chat-container">
+        <div class="chat-header">
+          <i class="fas fa-comments"></i>
+          <h2>Consulenza Urbanistica Intelligente</h2>
+        </div>
+
+        <div class="messages scrollbar-hide" id="messagesContainer">
+          <div class="welcome-message">
+            <p><strong>Benvenuto in UrbanAI!</strong></p>
+            <p>
+              Sono il tuo assistente specializzato in urbanistica e normative edilizie italiane.<br>
+              Puoi farmi domande su permessi di costruire, piani regolatori, normative comunali,
+              vincoli territoriali e molto altro.
+            </p>
+          </div>
+
+          <div class="typing-indicator" id="typingIndicator">
+            <div class="message-avatar" style="background: #764ba2;">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div class="typing-dots">
+              <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+            </div>
+            <span style="color: #718096; font-style: italic;">UrbanAI sta elaborando...</span>
+          </div>
+        </div>
+
+        <div class="input-container">
+          <form id="chatForm" class="input-group" autocomplete="off">
+            <div class="input-wrapper">
+              <textarea
+                id="questionInput"
+                placeholder="Scrivi la tua domanda urbanistica qui..."
+                rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+              ></textarea>
+            </div>
+            <button type="submit" id="sendBtn" disabled>
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+          <div class="error-message" id="errorMessage"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class UrbanAI {
+        constructor() {
+          this.messagesContainer = document.getElementById('messagesContainer');
+          this.questionInput = document.getElementById('questionInput');
+          this.sendBtn = document.getElementById('sendBtn');
+          this.chatForm = document.getElementById('chatForm');
+          this.errorMessage = document.getElementById('errorMessage');
+          this.typingIndicator = document.getElementById('typingIndicator');
+          this.statusDot = document.getElementById('statusDot');
+          this.statusText = document.getElementById('statusText');
+
+          this.sending = false;
+          this.apiBase = this.getApiBase();
+
+          this.initializeEventListeners();
+          this.autoResizeTextarea();
+          this.questionInput.focus();
+          this.pingBackend();
+        }
+
+        getApiBase() {
+          const meta = document.querySelector('meta[name="urbanai-api"]');
+          if (meta && meta.content) return meta.content.replace(/\/+$/, '');
+          if (location.protocol === 'file:') return 'http://localhost:3000';
+          
+          // For urbanator.it, use the Vercel API endpoints
+          if (location.hostname === 'urbanator.it' || location.hostname === 'www.urbanator.it') {
+            return 'https://new-urbanai3.vercel.app';
+          }
+          
+          return '';
+        }
+        apiUrl(path) {
+          return `${this.apiBase}${path.startsWith('/') ? path : '/'+path}`;
+        }
+
+        async pingBackend() {
+          try {
+            const r = await fetch(this.apiUrl('/api/initialize'), { method: 'POST' });
+            if (r.ok) {
+              this.setStatus('Sistema Attivo', 'online');
+            } else {
+              this.setStatus('API raggiungibile (init non disponibile)', 'degraded');
+            }
+          } catch (e) {
+            this.setStatus('Offline (uso fallback locale)', 'offline');
+          }
+        }
+
+        setStatus(text, mode) {
+          this.statusText.textContent = text;
+          this.statusDot.classList.remove('degraded','offline');
+          if (mode === 'degraded') this.statusDot.classList.add('degraded');
+          if (mode === 'offline') this.statusDot.classList.add('offline');
+        }
+
+        initializeEventListeners() {
+          // PRIMARY: Form submit handler (most reliable for Enter key)
+          this.chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = this.questionInput.value.trim();
+            if (message && !this.sending) {
+              this.sendMessage();
+            }
+          });
+
+          // BACKUP: Direct button click
+          this.sendBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const message = this.questionInput.value.trim();
+            if (message && !this.sending) {
+              this.sendMessage();
+            }
+          });
+
+          // BACKUP: Enter key handler (for textarea directly)
+          this.questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+              e.preventDefault();
+              const message = this.questionInput.value.trim();
+              if (message && !this.sending) {
+                this.sendMessage();
+              }
+            }
+          });
+
+          // Input validation
+          this.questionInput.addEventListener('input', () => {
+            this.validateInput();
+            this.autoResizeTextarea();
+          });
+        }
+
+        validateInput() {
+          const question = this.questionInput.value.trim();
+          this.sendBtn.disabled = question.length === 0 || this.sending;
+          this.hideError();
+        }
+
+        autoResizeTextarea() {
+          const ta = this.questionInput;
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+        }
+
+        async sendMessage() {
+          if (this.sending) return;
+          const question = this.questionInput.value.trim();
+          if (!question) return;
+
+          this.sending = true;
+          this.sendBtn.disabled = true;
+
+          this.addMessage(question, 'user');
+
+          this.questionInput.value = '';
+          this.autoResizeTextarea();
+          this.hideError();
+
+          this.showTypingIndicator();
+
+          try {
+            const response = await this.queryAPI(question);
+            this.hideTypingIndicator();
+            this.sending = false;
+            this.validateInput();
+
+            if (response.success) {
+              this.addMessage(response.answer, 'assistant', {
+                knowledgeBaseUsed: response.knowledgeBaseUsed,
+                sourcesFound: response.sourcesFound
+              });
+            } else {
+              this.addMessage(this.localFallback(question), 'assistant', { });
+              this.showError('Il server ha risposto ma senza risultato utile.');
+            }
+          } catch (error) {
+            this.hideTypingIndicator();
+            this.sending = false;
+            this.validateInput();
+            console.error('Errore chiamata API:', error);
+            this.addMessage(this.localFallback(question, true), 'assistant', { });
+            this.showError('Connessione API non riuscita. Risposta generata in locale.');
+            this.setStatus('Offline (uso fallback locale)', 'offline');
+          }
+        }
+
+        async queryAPI(question) {
+          const resp = await fetch(this.apiUrl('/api/query'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question })
+          });
+          if (!resp.ok) {
+            const text = await resp.text().catch(()=>'');
+            console.error('HTTP non-OK:', resp.status, resp.statusText, text);
+            throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+          }
+          return await resp.json();
+        }
+
+        localFallback(q, offline=false) {
+          const t = q.trim().toLowerCase();
+
+          const saluti = ['ciao','buongiorno','salve','hey','hola','buonasera','ehi','hi','hello'];
+          if (saluti.includes(t)) {
+            return `Ciao! Sono UrbanAI, il tuo assistente per urbanistica, edilizia e pianificazione. Come posso aiutarti oggi?${offline ? '\n\n_(Nota: modalità offline)_':''}`;
+          }
+
+          if (t.includes('cosa puoi fare') || t.includes('cosa sai fare') ||
+              t.includes('come puoi aiutarmi') || t.includes('puoi aiutare') ||
+              t.includes('aiutarmi')) {
+            return `Posso aiutarti a:
+• Comprendere i **titoli edilizi** (Permesso di costruire, SCIA, CILA, edilizia libera)
+• Verificare **distanze**, **altezze**, **indici** e **zonizzazione** (PRG/PGT)
+• Individuare **vincoli** (paesaggistici, sismici, idraulici) e l'iter autorizzativo
+• Preparare **check-list** e prime valutazioni di fattibilità
+${offline ? '\n_(Nota: modalità offline, sintesi generata lato frontend)_' : ''}`;
+          }
+
+          if (t.includes('confine') || t.includes('distanza dal confine') ||
+              (t.includes('distanza') && (t.includes('costruire') || t.includes('costruzione') ||
+              t.includes('nuova costruzione')))) {
+            return `Distanze dal confine – indicazioni generali:
+• **Codice Civile (art. 873)**: distanza minima tra costruzioni di **3 m**, salvo norme locali più restrittive.
+• **DM 1444/1968**: tra **pareti finestrate** e **pareti di edifici antistanti** in zona B e C, minimo **10 m**.
+• I **Regolamenti edilizi/PRG/PGT** possono fissare distanze dal confine (es. 5 m) o consentire la **costruzione sul confine** con condizioni.
+Operativamente: indica **Comune** e **zona** per verifiche puntuali su NTA e Regolamento edilizio.${offline ? '\n_(Modalità offline: controlla le fonti locali)_':''}`;
+          }
+
+          if (t.includes('permesso di costruire') || t.includes('scia') ||
+              t.includes('cila') || t.includes('c.i.l.a') || t.includes('dia')) {
+            return `Titoli edilizi – panoramica:
+• **Edilizia libera**: opere minori definite dalla normativa.
+• **CILA**: manutenzione straordinaria senza parti strutturali.
+• **SCIA**: interventi più rilevanti, anche su strutture; esiste la **SCIA alternativa** al PdC in alcuni casi.
+• **Permesso di Costruire**: nuove costruzioni, ristrutturazioni pesanti, ampliamenti, cambi d'uso rilevanti.
+Serve sempre verificare **vincoli** e **zonizzazione** del Comune.${offline ? '\n_(Modalità offline)_':''}`;
+          }
+
+          return `Posso aiutarti con distanze, titoli edilizi (CILA/SCIA/PdC), vincoli e PRG/PGT. Dimmi **Comune**, **zona/indirizzo** e **tipo di intervento** (es. nuova costruzione, ampliamento, cambio d'uso) e ti do un primo inquadramento.${offline ? '\n_(Modalità offline)_':''}`;
+        }
+
+        addMessage(content, sender, metadata = null) {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `message ${sender}`;
+
+          const avatarIcon = sender === 'user' ? 'fas fa-user' : 'fas fa-robot';
+
+          let metadataHTML = '';
+          if (metadata && metadata.knowledgeBaseUsed) {
+            metadataHTML = `
+              <div class="info-badge" style="margin-top: 8px;">
+                <i class="fas fa-database"></i>
+                ${metadata.sourcesFound} fonti dalla Gazzetta Ufficiale
+              </div>
+            `;
+          }
+
+          messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="${avatarIcon}"></i></div>
+            <div class="message-content">
+              ${this.formatMessage(content)}
+              ${metadataHTML}
+            </div>
+          `;
+
+          this.messagesContainer.appendChild(messageDiv);
+          this.scrollToBottom();
+        }
+
+        formatMessage(content) {
+          return content
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+
+        showTypingIndicator() { this.typingIndicator.style.display = 'flex'; this.scrollToBottom(); }
+        hideTypingIndicator() { this.typingIndicator.style.display = 'none'; }
+        showError(message) { this.errorMessage.textContent = message; this.errorMessage.style.display = 'block'; }
+        hideError() { this.errorMessage.style.display = 'none'; }
+        scrollToBottom() { this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight; }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => { new UrbanAI(); });
+    </script>
+</body>
+</html>
