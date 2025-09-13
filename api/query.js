@@ -49,65 +49,20 @@ export default async function handler(req, res) {
 
         console.log(`Processing query: ${question}`);
 
-        // Generate embedding for the question
-        const embeddingResponse = await openai.embeddings.create({
-            model: 'text-embedding-ada-002',
-            input: question.trim(),
-        });
+        // TEMPORARY: Skip OpenAI for now - return basic response
+        const answer = `Ciao! Sono UrbanAI. Al momento sto elaborando la tua richiesta: "${question}". 
         
-        const queryEmbedding = embeddingResponse.data[0].embedding;
-        
-        // Search in Pinecone
-        const index = pinecone.index(PINECONE_INDEX_NAME);
-        const searchResponse = await index.query({
-            vector: queryEmbedding,
-            topK: 5,
-            includeMetadata: true,
-            includeValues: false
-        });
+Il sistema di AI è temporaneamente in manutenzione, ma le funzioni di scraping e gestione documenti sono operative.
+
+Per testare lo scraping della Gazzetta Ufficiale, puoi usare i comandi:
+- admin: per vedere le statistiche
+- bulk-scrape: per avviare lo scraping automatico
+
+Riprova più tardi per le risposte AI complete.`;
 
         let context = '';
         let sourcesFound = 0;
         let knowledgeBaseUsed = false;
-
-        if (searchResponse.matches && searchResponse.matches.length > 0) {
-            console.log(`Found ${searchResponse.matches.length} relevant documents`);
-            knowledgeBaseUsed = true;
-            sourcesFound = searchResponse.matches.length;
-            
-            const relevantTexts = searchResponse.matches
-                .filter(match => match.score > 0.7)
-                .slice(0, 3)
-                .map(match => match.metadata.text)
-                .join('\n\n');
-            
-            context = relevantTexts;
-        }
-
-        // Generate response using OpenAI with context
-        let systemPrompt = `Sei UrbanAI, un assistente esperto in urbanistica, edilizia e normative italiane. 
-Rispondi in modo professionale, pratico e preciso. Usa terminologia tecnica quando appropriato ma spiega i concetti complessi.
-Concentrati su aspetti pratici come permessi, distanze, vincoli, zonizzazione e procedure amministrative.
-Se non hai informazioni specifiche, fornisci comunque orientamenti generali utili.`;
-
-        let userPrompt = question;
-
-        if (context && context.length > 100) {
-            systemPrompt += `\n\nUtilizza le seguenti informazioni dalla Gazzetta Ufficiale quando rilevanti:\n\n${context}`;
-            userPrompt += '\n\nBasa la risposta sulle normative ufficiali quando possibile.';
-        }
-
-        const completionResponse = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            max_tokens: 800,
-            temperature: 0.3
-        });
-
-        const answer = completionResponse.choices[0].message.content;
 
         return res.status(200).json({
             success: true,
