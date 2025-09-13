@@ -6,7 +6,7 @@ import * as cheerio from 'cheerio';
 import pdf from 'pdf-parse';
 
 const PINECONE_API_KEY = process.env.PINECONE_API_KEY;
-const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'urbanai';
+const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'urban-ai';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 
