@@ -346,7 +346,7 @@
         }
 
         async queryAPI(question) {
-          const url = this.apiUrl('/api/query');
+          const url = this.apiUrl('/api/test-clean');
           console.log('🚀 CALLING API URL:', url);
           const resp = await fetch(url, {
             method: 'POST',
