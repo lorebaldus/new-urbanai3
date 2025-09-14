@@ -218,10 +218,10 @@
         }
 
         getApiBase() {
-          // PRIORITY 1: Force urbanator.it to use Vercel API (v4 - correct URL)
+          // PRIORITY 1: Force urbanator.it to use correct Vercel API
           if (location.hostname === 'urbanator.it' || location.hostname === 'www.urbanator.it') {
-            console.log('Urbanator.it detected - using NEW PROJECT');
-            return 'https://new-urbanai0.vercel.app';
+            console.log('Urbanator.it detected - using CLEAN SETUP');
+            return 'https://new-urbanai.vercel.app';
           }
           
           const meta = document.querySelector('meta[name="urbanai-api"]');
@@ -235,9 +235,12 @@
         }
 
         async pingBackend() {
-          console.log('Pinging backend:', this.apiUrl('/api/initialize-cors'));
           try {
-            const r = await fetch(this.apiUrl('/api/initialize-cors'), { method: 'GET' });
+            const r = await fetch(this.apiUrl('/api/admin'), { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ command: 'admin' })
+            });
             if (r.ok) {
               this.setStatus('Sistema Attivo', 'online');
             } else {
@@ -347,7 +350,7 @@
         }
 
         async queryAPI(question) {
-          const url = this.apiUrl('/api/test-clean');
+          const url = this.apiUrl('/api/query');
           console.log('🚀 CALLING API URL:', url);
           const resp = await fetch(url, {
             method: 'POST',
