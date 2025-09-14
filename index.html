@@ -235,8 +235,9 @@
         }
 
         async pingBackend() {
+          console.log('Pinging backend:', this.apiUrl('/api/initialize-cors'));
           try {
-            const r = await fetch(this.apiUrl('/api/initialize'), { method: 'POST' });
+            const r = await fetch(this.apiUrl('/api/initialize-cors'), { method: 'GET' });
             if (r.ok) {
               this.setStatus('Sistema Attivo', 'online');
             } else {
